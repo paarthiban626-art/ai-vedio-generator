@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Generator | Parthibhan Technologies</title>
+    <style>
+        /* --- CSS STYLES --- */
+        :root {
+            --bg-color: #050505;
+            --card-bg: #111111;
+            --accent: #00f2ea; /* Neon Cyan */
+            --accent-glow: rgba(0, 242, 234, 0.3);
+            --text-main: #ffffff;
+            --text-sec: #a0a0a0;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Header */
+        header {
+            padding: 20px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand { font-size: 1.2rem; font-weight: bold; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); }
+        .brand span { color: white; font-size: 0.9rem; font-weight: normal; }
+
+        /* Container */
+        .container { max-width: 600px; margin: 40px auto; padding: 20px; width: 100%; }
+
+        /* Login Screen */
+        #login-section { text-align: center; animation: fadeIn 0.8s ease; }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #222;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: var(--accent);
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        button:hover { background: white; box-shadow: 0 0 15px white; }
+
+        /* Main App */
+        #app-section { display: none; animation: fadeIn 0.8s ease; }
+        .marketing-text {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            color: var(--text-sec);
+            line-height: 1.5;
+        }
+        .marketing-text strong { color: var(--accent); display: block; margin-bottom: 5px; font-size: 1.3rem; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-sec); }
+        
+        .nav-btn {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 15px;
+            width: auto;
+            margin: 0;
+        }
+
+        /* Gallery */
+        #gallery-section { display: none; padding: 20px; animation: fadeIn 0.5s ease; }
+        .video-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 1px solid #222;
+        }
+        .video-card video { width: 100%; display: block; }
+        .card-info { padding: 15px; }
+        .download-btn { background: #333; color: white; text-decoration: none; padding: 10px; display: block; text-align: center; border-radius: 5px; margin-top: 10px; }
+
+        .hidden { display: none !important; }
+        .notification-msg { 
+            color: var(--accent); 
+            text-align: center; 
+            margin-top: 15px; 
+            font-size: 0.95rem; 
+            line-height: 1.4;
+            background: rgba(0, 242, 234, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid rgba(0, 242, 234, 0.2);
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">AI Video Generator<br><span>by Parthibhan Technologies</span></div>
+        <button id="nav-videos-btn" class="nav-btn hidden" onclick="toggleGallery()">Videos 🎬</button>
+    </header>
+
+    <div class="container">
+        
+        <div id="login-section">
+            <h2 style="margin-bottom: 20px;">Welcome Back</h2>
+            <input type="text" id="username" placeholder="Enter Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="handleLogin()">Login</button>
+            <p id="login-error" style="color: red; margin-top: 10px;"></p>
+        </div>
+
+        <div id="app-section">
+            <div class="marketing-text">
+                <strong>No VPN required.</strong>
+                Generate unlimited AI videos easily in seconds.
+            </div>
+
+            <div class="form-group">
+                <label>Upload Reference Image</label>
+                <input type="file" id="imageInput" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label>Describe your video</label>
+                <input type="text" id="promptInput" placeholder="E.g., A cyberpunk city in rain...">
+            </div>
+
+            <button onclick="submitRequest()">Generate Video ✨</button>
+            <div id="status-msg" class="notification-msg"></div>
+        </div>
+
+    </div>
+
+    <div id="gallery-section">
+        <h2 style="margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;">My AI Videos</h2>
+        <button onclick="toggleGallery()" style="background: #333; color: white; margin-bottom: 20px; width: auto; padding: 5px 15px;">&larr; Back to Generator</button>
+        <div id="videos-container">
+            </div>
+    </div>
+
+    <script>
+        // --- JAVASCRIPT LOGIC ---
+
+        const FIXED_PASS = "ai*vpnfree";
+        let currentUser = "";
+
+        // 1. Login Logic
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if(pass === FIXED_PASS && user.trim() !== "") {
+                currentUser = user;
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('app-section').style.display = 'block';
+                document.getElementById('nav-videos-btn').classList.remove('hidden');
+                
+                // Request notification permission
+                if (Notification.permission !== "granted") {
+                    Notification.requestPermission();
+                }
+                loadGallery();
+            } else {
+                document.getElementById('login-error').innerText = "Invalid credentials.";
+            }
+        }
+
+        // 2. Submit Request
+        function submitRequest() {
+            const fileInput = document.getElementById('imageInput');
+            const prompt = document.getElementById('promptInput').value;
+            const statusMsg = document.getElementById('status-msg');
+
+            if(fileInput.files.length === 0 || prompt.trim() === "") {
+                alert("Please provide both an image and a prompt.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.readAsDataURL(fileInput.files[0]);
+            reader.onload = function () {
+                const newRequest = {
+                    id: Date.now(),
+                    user: currentUser,
+                    image: reader.result,
+                    prompt: prompt,
+                    status: 'Waiting',
+                    video: null,
+                    timestamp: new Date().toLocaleTimeString()
+                };
+
+                let data = JSON.parse(localStorage.getItem('aiVideoRequests') || "[]");
+                data.push(newRequest);
+                localStorage.setItem('aiVideoRequests', JSON.stringify(data));
+
+                // --- NEW SUCCESS MESSAGE ---
+                statusMsg.style.display = 'block';
+                statusMsg.innerHTML = `
+                    Request Submitted! We will notify you soon.<br><br>
+                    <strong>Once you receive the notification, please click the "Videos" button above to view your generated video.</strong>
+                `;
+                
+                document.getElementById('promptInput').value = "";
+                fileInput.value = "";
+            };
+        }
+
+        // 3. Gallery & Updates
+        function toggleGallery() {
+            const app = document.getElementById('app-section');
+            const gallery = document.getElementById('gallery-section');
+            const container = document.querySelector('.container');
+
+            if(gallery.style.display === 'block') {
+                gallery.style.display = 'none';
+                container.style.display = 'block';
+                app.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+                gallery.style.display = 'block';
+                loadGallery();
+            }
+        }
+
+        function loadGallery() {
+            const container = document.getElementById('videos-container');
+            const data = JSON.parse(localStorage.getItem('aiVideoRequests') || "[]");
+            
+            // Filter only completed videos for this user
+            const myVideos = data.filter(item => item.user === currentUser && item.status === 'Completed');
+
+            container.innerHTML = "";
+            if(myVideos.length === 0) {
+                container.innerHTML = "<p style='color: gray; text-align: center;'>No videos found. Submit a request or wait for admin.</p>";
+                return;
+            }
+
+            myVideos.reverse().forEach(vid => {
+                const card = `
+                    <div class="video-card">
+                        <video controls src="${vid.video}"></video>
+                        <div class="card-info">
+                            <p style="color: var(--accent); font-size: 0.9rem;">Prompt: ${vid.prompt}</p>
+                            <a href="${vid.video}" download="ai-video-${vid.id}.mp4" class="download-btn">Download Video 🎬</a>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        // 4. Listen for Admin Updates (Real-time)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'aiVideoRequests') {
+                const newData = JSON.parse(e.newValue || "[]");
+                const oldData = JSON.parse(e.oldValue || "[]");
+
+                // Check for completion
+                const completedNow = newData.find(n => 
+                    n.user === currentUser && 
+                    n.status === 'Completed' &&
+                    !oldData.find(o => o.id === n.id && o.status === 'Completed')
+                );
+
+                if (completedNow) {
+                    if (Notification.permission === "granted") {
+                        new Notification("AI Video Generator", {
+                            body: "Your AI video is ready! Check the Videos section. 🎬",
+                            icon: completedNow.image
+                        });
+                    }
+                    loadGallery();
+                }
+                
+                // If admin deleted something while gallery is open, refresh it
+                loadGallery();
+            }
+        });
+
+    </script>
+</body>
+</html>

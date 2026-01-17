@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Parthibhan Technologies</title>
+    <style>
+        /* --- ADMIN STYLES --- */
+        :root {
+            --bg-color: #f4f6f8;
+            --header-bg: #fff;
+            --accent: #4f46e5; /* Indigo */
+            --danger: #ef4444; /* Red */
+            --text: #333;
+            --gray-btn: #e5e7eb;
+        }
+        body { background: var(--bg-color); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; }
+        
+        header { background: var(--header-bg); padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-size: 1.2rem; color: var(--accent); }
+        
+        .container { max-width: 1000px; margin: 30px auto; padding: 20px; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid var(--accent); position: relative; }
+        .card.completed { border-left-color: #10b981; opacity: 0.9; }
+        
+        .user-row { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; }
+        .timestamp { font-size: 0.8rem; color: #888; }
+        
+        .preview-container { margin-bottom: 10px; position: relative; }
+        .preview-img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; background: #eee; display: block;}
+        
+        .prompt-text { background: #f0f0f0; padding: 10px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 15px; color: #555; margin-top: 10px; }
+        
+        input[type="file"] { margin-bottom: 10px; width: 100%; font-size: 0.9rem; }
+        
+        .send-btn {
+            background: var(--accent); color: white; border: none; padding: 10px 20px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold;
+        }
+        .send-btn:hover { background: #4338ca; }
+        
+        /* DELETE BUTTON STYLE */
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+        .delete-btn:hover { background: #dc2626; }
+
+        /* DOWNLOAD IMAGE BUTTON STYLE */
+        .download-img-link {
+            display: inline-block;
+            margin-top: 5px;
+            font-size: 0.8rem;
+            text-decoration: none;
+            color: #333;
+            background: var(--gray-btn);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .download-img-link:hover { background: #d1d5db; }
+
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; margin-bottom: 10px; background: #e0e7ff; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Admin Dashboard - AI Video Generator</h1>
+        <button onclick="requestNotif()" style="border:none; background:none; cursor:pointer; color: var(--accent);">🔔 Enable Alerts</button>
+    </header>
+
+    <div class="container">
+        <h3 style="margin-bottom: 20px;">Client Requests</h3>
+        <div id="request-grid" class="grid">
+            </div>
+    </div>
+
+    <script>
+        // --- ADMIN JS ---
+
+        function requestNotif() {
+            Notification.requestPermission();
+        }
+
+        function renderRequests() {
+            const grid = document.getElementById('request-grid');
+            const data = JSON.parse(localStorage.getItem('aiVideoRequests') || "[]");
+            
+            // Sort: Pending first, then by time
+            data.sort((a, b) => (a.status === 'Completed') - (b.status === 'Completed') || b.id - a.id);
+
+            grid.innerHTML = "";
+
+            if(data.length === 0) {
+                grid.innerHTML = "<p>No requests available.</p>";
+                return;
+            }
+
+            data.forEach(req => {
+                const isCompleted = req.status === 'Completed';
+                
+                const cardHTML = `
+                    <div class="card ${isCompleted ? 'completed' : ''}">
+                        <button class="delete-btn" onclick="deleteRequest(${req.id})">Delete 🗑️</button>
+                        
+                        <div class="user-row">
+                            <span>👤 ${req.user}</span>
+                        </div>
+                        <span class="timestamp">${req.timestamp}</span>
+                        <div style="margin-top:5px;"></div>
+                        <span class="status-badge" style="${isCompleted ? 'background:#d1fae5; color:#059669;' : ''}">${req.status}</span>
+                        
+                        <div class="preview-container">
+                            <img src="${req.image}" class="preview-img" alt="Ref Image">
+                            <a href="${req.image}" download="client_ref_${req.id}.png" class="download-img-link">Download Image ⬇️</a>
+                        </div>
+
+                        <div class="prompt-text">"${req.prompt}"</div>
+
+                        ${!isCompleted ? `
+                            <div id="action-area-${req.id}">
+                                <label style="font-size:0.8rem; display:block; margin-bottom:5px;">Upload Generated Video:</label>
+                                <input type="file" id="video-file-${req.id}" accept="video/*">
+                                <button class="send-btn" onclick="sendVideo(${req.id})">Send to User 🚀</button>
+                            </div>
+                        ` : `
+                            <div style="text-align:center; font-weight:bold; color: #059669;">✅ Video Sent</div>
+                        `}
+                    </div>
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        function sendVideo(id) {
+            const fileInput = document.getElementById(`video-file-${id}`);
+            if(fileInput.files.length === 0) {
+                alert("Please select a video file first.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.readAsDataURL(fileInput.files[0]);
+            reader.onload = function() {
+                let data = JSON.parse(localStorage.getItem('aiVideoRequests') || "[]");
+                const index = data.findIndex(x => x.id === id);
+                
+                if(index !== -1) {
+                    data[index].video = reader.result; 
+                    data[index].status = 'Completed';
+                    localStorage.setItem('aiVideoRequests', JSON.stringify(data));
+                    renderRequests(); 
+                }
+            };
+        }
+
+        function deleteRequest(id) {
+            if(confirm("Are you sure you want to delete this video request?")) {
+                let data = JSON.parse(localStorage.getItem('aiVideoRequests') || "[]");
+                
+                const newData = data.filter(item => item.id !== id);
+                
+                localStorage.setItem('aiVideoRequests', JSON.stringify(newData));
+                renderRequests(); // Refresh UI
+            }
+        }
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'aiVideoRequests') {
+                renderRequests(); 
+                
+                const newData = JSON.parse(e.newValue || "[]");
+                const oldData = JSON.parse(e.oldValue || "[]");
+                if (newData.length > oldData.length && Notification.permission === "granted") {
+                    new Notification("New Order", { body: "New client is waiting for AI video generation" });
+                }
+            }
+        });
+
+        renderRequests();
+
+    </script>
+</body>
+</html>
